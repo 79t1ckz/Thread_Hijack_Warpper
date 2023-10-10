@@ -1,0 +1,16 @@
+# Thread_Hijack_Warpper
+An example about how to hijack thread to any (normal) functions you want
+
+# 中文介绍
+* 主要用于劫持线程到一个“非汇编编写的”函数中。
+* 输入原始线程通用寄存器上下文、函数调用时通用寄存器上下文、参数，然后可以进行劫持
+* 需要自行处理各种调用约定
+* 函数调用时的上下文中，非易失寄存器的赋值是无效的。
+* 不建议递归劫持。
+
+# Description In English
+* It's mainly used to hijack thread to one "not made by asm" function
+* Input Original Basic Context, Calling Basic Context, Function Arguments, and then you can start hijack
+* need to handle calling convention by yourself
+* In Calling Basic Context, callee-preserved regs is invalid.
+* Better not hijack before the hijack routine return back.
