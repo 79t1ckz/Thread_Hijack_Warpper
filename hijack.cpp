@@ -25,7 +25,7 @@ bool hijack_thread_ex(
 
 	dbgln("stack_ptr = %p", stack_ptr);
 
-	stack_ptr -= 0x100;
+	//stack_ptr -= 0x100;
 
 	/* fill the context */
 	stack_ptr -= sizeof(BASIC_CONTEXT);

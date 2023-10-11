@@ -99,7 +99,7 @@ hijack_warpper_routine proc
 	mov r14, [rsi + 112]
 	mov r15, [rsi + 120]
 
-;	
+;
 ;	restore rflags
 ;
 	mov rdi, [rsi + 128]
@@ -112,8 +112,8 @@ hijack_warpper_routine proc
 	mov rdi, [rsi + 136]	; get orig eip first, soon it will be corrupted
 	mov rsp, [rsi + 48]
 	push rdi				; now orig eip slot is corrupted
-	mov rdi, [rsi + 32]
-	mov rsi, [rsi + 40]
+	mov rdi, [rsi + 40]
+	mov rsi, [rsi + 32]
 	ret
 
 	
