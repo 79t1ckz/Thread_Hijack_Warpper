@@ -12,5 +12,5 @@ An example about how to hijack thread to any (normal) functions you want
 * It's mainly used to hijack thread to one "not made by asm" function
 * Input Original Basic Context, Calling Basic Context, Function Arguments, and then you can start hijack
 * need to handle calling convention by yourself
-* In Calling Basic Context, callee-preserved regs is invalid.
+* In Calling Basic Context, callee-preserved regs are invalid.
 * It is not recommended to recursively hijack, as it may cause stack overflow after many times.
