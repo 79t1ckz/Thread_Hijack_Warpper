@@ -1,5 +1,9 @@
 #include "hijack.h"
 
+#define infoln(format, ...) printf(format "\n", ##__VA_ARGS__)
+#define errln(format, ...) printf("[ERR]" format "\n", ##__VA_ARGS__)
+#define errln_ex(format, ...) printf("[ERR %d]" format "\n", GetLastError(), ##__VA_ARGS__)
+
 unsigned char lpText[] = "THREAD GOT HIJACKED!!";
 unsigned char lpTitle[] = "INFO";
 
@@ -15,56 +19,54 @@ DWORD WINAPI test_thread(LPVOID lParam)
 
 void test_hijack(HANDLE hThread)
 {
+	PVOID lpArgs;
 	BASIC_CONTEXT orig_con;
-	BASIC_CONTEXT hijack_con;
-	SuspendThread(hThread);
-	if (!get_basic_context(hThread, &orig_con)) {
-		return;
-	}
+	BASIC_CONTEXT call_con;
+	HJK_CON hjk_con;
 
-	memcpy(&hijack_con, &orig_con, sizeof(BASIC_CONTEXT));
+	SuspendThread(hThread);
+
+	get_basic_context(hThread, &orig_con);
+
+	memcpy(&call_con, &orig_con, sizeof(BASIC_CONTEXT));
+
+
 
 #ifdef _WIN64
-	hijack_con.rcx = NULL;
-	hijack_con.rdx = (qword)lpText;
-	hijack_con.r8 = (qword)lpTitle;
-	hijack_con.r9 = NULL;
+	call_con.rcx = NULL;
+	call_con.rdx = (DWORD64)lpText;
+	call_con.r8 = (DWORD64)lpTitle;
+	call_con.r9 = NULL;
+	lpArgs = NULL;
 
-	hijack_con.rip = (qword)MessageBoxA;
-
-	bool result = hijack_thread(hThread,
-		&orig_con,
-		&hijack_con,
-		NULL,
-		4 * sizeof(UPVOID),
-		16);
-
+	call_con.rip = (DWORD64)MessageBoxA;
 #else
-	/* don't handle memory leak, because I'm lazy */
-	void** args = new void* [4];
-	args[0] = NULL;
-	args[1] = (void*)lpText;
-	args[2] = (void*)lpTitle;
-	args[3] = NULL;
+	DWORD args_arr[4];
+	args_arr[0] = NULL;
+	args_arr[1] = (DWORD)lpText;
+	args_arr[2] = (DWORD)lpTitle;
+	args_arr[3] = NULL;
+	lpArgs = args_arr;
 
-	hijack_con.eip = (dword)MessageBoxA;
-
-	bool result = hijack_thread(hThread,
-		&orig_con,
-		&hijack_con,
-		args,
-		4 * sizeof(UPVOID),
-		16);
+	call_con.eip = (DWORD)MessageBoxA;
 
 #endif
 
+	hjk_con.hProc = GetCurrentProcess();
+	hjk_con.hThread = hThread;
+	hjk_con.WarpperRoutine = NULL;
 
+	hjk_con.lpArgs = lpArgs;
+	hjk_con.ArgSize = 4 * sizeof(PVOID);
+	hjk_con.ArgAlignNum = 16;
+
+	hjk_con.lpOriCon = &orig_con;
+	hjk_con.lpCallCon = &call_con;
+
+
+	hijack_thread_context(&hjk_con);
 
 	ResumeThread(hThread);
-
-#ifndef _WIN64
-	delete[] args;
-#endif
 }
 
 int main()
@@ -92,7 +94,6 @@ int main()
 
 	} while (result != IDNO);
 
-	//WaitForSingleObject(hThread, INFINITE);
 
 	return 0;
 }

@@ -3,87 +3,102 @@
 #include <windows.h>
 #include <stdio.h>
 
-extern "C" {
+//extern "C" {
+//
+//	// asm routine
+//	void hijack_warpper_routine();
+//
+//}
 
-	// asm routine
-	void hijack_warpper_routine();
-
-}
-
-/* logger */
-#define infoln(format, ...) printf(format "\n", ##__VA_ARGS__)
-#define errln(format, ...) printf("[ERR]" format "\n", ##__VA_ARGS__)
-#define errln_ex(format, ...) printf("[ERR %d]" format "\n", GetLastError(), ##__VA_ARGS__)
-
-#define dbgln(format, ...)
-//#define dbgln(format, ...) printf("<dbg> " format "\n", ##__VA_ARGS__)
 
 #define THREAD_HIJACK_ACCESS THREAD_GET_CONTEXT|THREAD_SET_CONTEXT|THREAD_SUSPEND_RESUME
 
-typedef unsigned int dword;
-typedef unsigned long long qword;
+//typedef unsigned int DWORD;
+//typedef unsigned long long DWORD64;
 
-typedef struct _BASIC_CONTEXT32
+typedef struct
 {
-	dword eax;
-	dword ebx;
-	dword ecx;
-	dword edx;
-	dword esi;
-	dword edi;
-	dword esp;
-	dword ebp;
+	DWORD eax;
+	DWORD ebx;
+	DWORD ecx;
+	DWORD edx;
+	DWORD esi;
+	DWORD edi;
+	DWORD esp;
+	DWORD ebp;
 
-	dword eflags;
-	dword eip;
+	DWORD eflags;
+	DWORD eip;
 
 }BASIC_CONTEXT32;
 
-typedef struct _BASIC_CONTEXT64
+typedef struct
 {
-	qword rax;
-	qword rbx;
-	qword rcx;
-	qword rdx;
-	qword rsi;
-	qword rdi;
-	qword rsp;
-	qword rbp;
+	DWORD64 rax;
+	DWORD64 rbx;
+	DWORD64 rcx;
+	DWORD64 rdx;
+	DWORD64 rsi;
+	DWORD64 rdi;
+	DWORD64 rsp;
+	DWORD64 rbp;
 
-	qword r8;
-	qword r9;
-	qword r10;
-	qword r11;
-	qword r12;
-	qword r13;
-	qword r14;
-	qword r15;
+	DWORD64 r8;
+	DWORD64 r9;
+	DWORD64 r10;
+	DWORD64 r11;
+	DWORD64 r12;
+	DWORD64 r13;
+	DWORD64 r14;
+	DWORD64 r15;
 
-	qword rflags;
-	qword rip;
+	DWORD64 rflags;
+	DWORD64 rip;
 
 }BASIC_CONTEXT64;
 
+typedef struct
+{
+	HANDLE hProc;
+	HANDLE hThread;
+	BASIC_CONTEXT32* lpOriCon;
+	BASIC_CONTEXT32* lpCallCon;
+	PVOID WarpperRoutine;
+	PVOID lpArgs;
+	unsigned int ArgSize;
+	unsigned int ArgAlignNum;
+
+}HJK_CON32;
+
+typedef struct
+{
+	HANDLE hProc;
+	HANDLE hThread;
+	BASIC_CONTEXT64* lpOriCon;
+	BASIC_CONTEXT64* lpCallCon;
+	PVOID WarpperRoutine;
+	PVOID lpArgs;
+	unsigned int ArgSize;
+	unsigned int ArgAlignNum;
+}HJK_CON64;
+
 #ifdef _WIN64
 typedef BASIC_CONTEXT64 BASIC_CONTEXT;
-typedef unsigned long long UPVOID;
+typedef HJK_CON64 HJK_CON;
 #else
 typedef BASIC_CONTEXT32 BASIC_CONTEXT;
-typedef unsigned int UPVOID;
+typedef HJK_CON32 HJK_CON;
 #endif
 
+
+
+PVOID alloc_on_stack(PVOID lpStackPtr, unsigned int DesiredSize, unsigned int AlignNum);
+unsigned char* get_shellcode(unsigned int* lpShellSize);
+unsigned char* get_shellcode_wow64(unsigned int* lpShellSize);
+
+/* differs on versions */
 bool get_basic_context(HANDLE hThread, BASIC_CONTEXT* lpContext);
+bool hijack_thread_context(HJK_CON* lpHijackContext);
 
-bool hijack_thread_ex(
-	HANDLE hProc, HANDLE hThread,
-	BASIC_CONTEXT* lpOriContext, BASIC_CONTEXT* lpCallContext,
-	PVOID WarpperRoutineAddr, 
-	PVOID lpArgs, unsigned int ArgSize,
-	unsigned int ArgAlignNum);
-
-bool hijack_thread(
-	HANDLE hThread,
-	BASIC_CONTEXT* lpOriContext, BASIC_CONTEXT* lpCallContext,
-	PVOID lpArgs,
-	unsigned int ArgSize, 
-	unsigned int ArgAlignNum);
+bool get_basic_context_wow64(HANDLE hThread, BASIC_CONTEXT32* lpContext);
+bool hijack_thread_context_wow64(HJK_CON32* lpHijackContext);
